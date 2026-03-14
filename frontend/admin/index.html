@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Tournoi Dek Hockey</title>
+<style>
+:root{--bg:#FAF7F3;--card:#fff;--border:#E0DBD4;--text:#2C2C2C;--muted:#7A7570;--dim:#AAA49D;--accent:#c5a55a;--accent-h:#b8963f;--accent-bg:rgba(197,165,90,.1);--green:#2d9d5a;--red:#c0392b;--r:8px;--rl:12px;--shadow:0 2px 12px rgba(0,0,0,.06)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1rem}
+.login-card{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:2.5rem;width:100%;max-width:380px;box-shadow:var(--shadow);text-align:center}
+.login-card h1{font-size:1.6rem;letter-spacing:2px;text-transform:uppercase;margin-bottom:.25rem}
+.login-card h1 .g{color:var(--accent)}
+.login-card .sub{color:var(--muted);font-size:.85rem;margin-bottom:2rem}
+.login-card input{width:100%;padding:.75rem;background:var(--bg);border:1px solid var(--border);border-radius:var(--r);font-size:1rem;font-family:inherit;outline:none;margin-bottom:1rem;text-align:center;letter-spacing:2px}
+.login-card input:focus{border-color:var(--accent)}
+.login-card .btn{display:block;width:100%;padding:.75rem;background:var(--accent);color:#fff;border:none;border-radius:var(--r);font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;cursor:pointer;transition:.2s}
+.login-card .btn:hover{background:var(--accent-h)}
+.login-card .err{color:var(--red);font-size:.8rem;margin-top:.5rem;display:none}
+
+/* ADMIN SHELL */
+.shell{display:none}
+header{background:var(--card);border-bottom:1px solid var(--border);padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo{font-size:1.5rem;letter-spacing:2px;font-weight:800;color:var(--accent)}
+.logo span{color:var(--text);font-size:.9rem;font-weight:400;margin-left:.5rem}
+.nav{display:flex;background:var(--card);border-bottom:1px solid var(--border);padding:0 2rem;overflow-x:auto}
+.nav-t{padding:.85rem 1.2rem;cursor:pointer;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);border-bottom:2px solid transparent;transition:.2s;white-space:nowrap}
+.nav-t:hover{color:var(--text)}.nav-t.a{color:var(--accent);border-color:var(--accent)}
+
+main{max-width:1400px;margin:0 auto;padding:2rem}
+.sec{display:none}.sec.a{display:block}
+h2{font-size:1.6rem;letter-spacing:1px;margin-bottom:1.5rem}h2 .ac{color:var(--accent)}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:1.5rem;margin-bottom:1.5rem}
+label{display:block;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:.4rem}
+input[type=text],input[type=number],input[type=email],input[type=time],input[type=date],select{width:100%;padding:.6rem .8rem;background:var(--bg);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-family:inherit;font-size:.88rem;outline:none;transition:border-color .2s}
+input:focus,select:focus{border-color:var(--accent)}
+
+.btn{display:inline-flex;align-items:center;gap:.5rem;padding:.55rem 1.1rem;font-family:inherit;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;border:none;border-radius:var(--r);cursor:pointer;transition:.2s}
+.btn-p{background:var(--accent);color:#fff}.btn-p:hover{background:var(--accent-h)}
+.btn-s{background:var(--bg);border:1px solid var(--border);color:var(--muted)}.btn-s:hover{border-color:var(--muted);color:var(--text)}
+.btn-d{background:transparent;border:1px solid var(--red);color:var(--red)}.btn-d:hover{background:rgba(192,57,43,.05)}
+.btn-g{background:var(--green);color:#fff}.btn-g:hover{opacity:.9}
+.btn-sm{padding:.35rem .7rem;font-size:.68rem}
+
+.pills{display:flex;gap:.4rem;margin-bottom:1.5rem;flex-wrap:wrap}
+.pill{padding:.45rem 1rem;background:var(--card);border:1px solid var(--border);border-radius:50px;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;cursor:pointer;color:var(--muted);transition:.2s}
+.pill:hover{border-color:var(--muted);color:var(--text)}.pill.a{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+.badge{display:inline-block;padding:.15rem .5rem;border-radius:50px;font-size:.62rem;font-weight:700;text-transform:uppercase;background:var(--accent-bg);color:var(--accent)}
+
+/* CODE ROW */
+.cr{display:flex;align-items:center;gap:.7rem;padding:.7rem;background:var(--bg);border:1px solid var(--border);border-radius:var(--r);margin-bottom:.4rem;flex-wrap:wrap}
+.cr .ti{flex:1;min-width:120px}.cr .ti .tn{font-weight:600;font-size:.88rem}.cr .ti .dn{font-size:.68rem;color:var(--muted)}
+.cv{font-family:monospace;font-size:.82rem;font-weight:700;color:var(--accent);background:var(--accent-bg);padding:.25rem .5rem;border-radius:4px;letter-spacing:1px}
+.cp{background:none;border:1px solid var(--border);color:var(--muted);cursor:pointer;padding:.25rem .5rem;border-radius:4px;font-size:.68rem;font-weight:700;transition:.2s}
+.cp:hover{border-color:var(--accent);color:var(--accent)}
+.cp.ok{border-color:var(--green);color:var(--green)}
+
+.toast{position:fixed;bottom:2rem;right:2rem;background:var(--text);color:var(--bg);padding:.7rem 1.2rem;border-radius:var(--r);font-size:.82rem;font-weight:600;box-shadow:var(--shadow);transform:translateY(80px);opacity:0;transition:.3s;z-index:999}
+.toast.s{transform:translateY(0);opacity:1}
+
+.empty{text-align:center;padding:3rem;color:var(--dim)}.empty .ic{font-size:3rem;margin-bottom:1rem;opacity:.3}
+
+.tlist{display:flex;flex-direction:column;gap:.5rem;margin:1rem 0}
+.trow{display:flex;align-items:center;gap:.5rem;padding:.4rem .6rem;background:var(--bg);border:1px solid var(--border);border-radius:var(--r)}
+.trow .num{font-size:.68rem;color:var(--dim);font-weight:700;width:1.4rem;text-align:center}
+.trow input{border:none;background:transparent;flex:1;padding:.3rem 0;font-family:inherit;font-size:.88rem;color:var(--text);outline:none}
+.trow .x{background:none;border:none;color:var(--dim);cursor:pointer;font-size:1rem;transition:color .2s}.trow .x:hover{color:var(--red)}
+
+@media(max-width:768px){header{padding:.8rem 1rem}.nav{padding:0 .5rem}.nav-t{padding:.65rem .7rem;font-size:.65rem}main{padding:1rem}.cr{flex-wrap:wrap}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="loginWrap">
+  <div class="login-card">
+    <h1><span class="g">Dek Hockey</span></h1>
+    <p class="sub">Administration du tournoi</p>
+    <input type="password" id="loginPw" placeholder="Mot de passe" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="btn" onclick="doLogin()">Connexion</button>
+    <p class="err" id="loginErr">Mot de passe incorrect</p>
+  </div>
+</div>
+
+<!-- ADMIN SHELL -->
+<div class="shell" id="shell">
+<header>
+  <div class="logo">DEK HOCKEY <span>ADMIN</span></div>
+  <div style="display:flex;gap:.5rem">
+    <button class="btn btn-sm btn-s" onclick="logout()">Déconnexion</button>
+  </div>
+</header>
+
+<nav class="nav">
+  <div class="nav-t a" data-s="tournois">Tournois</div>
+  <div class="nav-t" data-s="config">Config</div>
+  <div class="nav-t" data-s="codes">Codes</div>
+  <div class="nav-t" data-s="brackets">Brackets</div>
+  <div class="nav-t" data-s="horaire">Horaire</div>
+  <div class="nav-t" data-s="inscriptions">Inscriptions</div>
+</nav>
+
+<main>
+  <!-- TOURNOIS -->
+  <section id="tournois" class="sec a">
+    <h2><span class="ac">⚡</span> Tournois</h2>
+    <div style="margin-bottom:1rem"><button class="btn btn-p" onclick="showCreateTournament()">+ Nouveau tournoi</button></div>
+    <div id="tournoisList"></div>
+    <div id="createTournamentForm" style="display:none" class="card">
+      <h3 style="margin-bottom:1rem">Nouveau tournoi</h3>
+      <div style="margin-bottom:.8rem"><label>Nom</label><input type="text" id="ntName" placeholder="Classique Dek Hockey 2026"></div>
+      <div style="display:flex;gap:.8rem;margin-bottom:.8rem">
+        <div style="flex:1"><label>Slug (URL)</label><input type="text" id="ntSlug" placeholder="classique-2026"></div>
+        <div style="flex:1"><label>Max joueurs</label><input type="number" id="ntMax" value="10" min="2" max="30"></div>
+      </div>
+      <div style="margin-bottom:1rem"><label>Date de l'événement</label><input type="date" id="ntDate"></div>
+      <div style="display:flex;gap:.5rem"><button class="btn btn-p" onclick="createTournament()">Créer</button><button class="btn btn-s" onclick="document.getElementById('createTournamentForm').style.display='none'">Annuler</button></div>
+    </div>
+  </section>
+
+  <!-- CONFIG -->
+  <section id="config" class="sec">
+    <h2><span class="ac">01.</span> Configuration</h2>
+    <div id="configContent"></div>
+  </section>
+
+  <!-- CODES -->
+  <section id="codes" class="sec">
+    <h2><span class="ac">02.</span> Codes d'inscription</h2>
+    <div style="margin-bottom:1rem;display:flex;gap:.5rem;flex-wrap:wrap">
+      <button class="btn btn-p" onclick="generateAllCodes()">Générer tous les codes</button>
+      <button class="btn btn-g" onclick="sendAllCodes()">📧 Envoyer les codes par courriel</button>
+      <button class="btn btn-s" onclick="exportCodesCSV()">⬇ CSV</button>
+    </div>
+    <div id="codesContent"></div>
+  </section>
+
+  <!-- BRACKETS -->
+  <section id="brackets" class="sec">
+    <h2><span class="ac">03.</span> Brackets</h2>
+    <div id="bracketsContent"></div>
+  </section>
+
+  <!-- HORAIRE -->
+  <section id="horaire" class="sec">
+    <h2><span class="ac">04.</span> Horaire</h2>
+    <div id="horaireContent"></div>
+  </section>
+
+  <!-- INSCRIPTIONS -->
+  <section id="inscriptions" class="sec">
+    <h2><span class="ac">05.</span> Inscriptions</h2>
+    <div id="inscriptionsContent"></div>
+  </section>
+</main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '/api';
+let token = localStorage.getItem('tournoi_admin_token');
+let currentTournament = null; // full tournament object with divisions
+let tournaments = [];
+
+// ═══ AUTH ═══
+async function doLogin() {
+  const pw = document.getElementById('loginPw').value;
+  try {
+    const r = await fetch(`${API}/auth/login`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({password: pw})
+    });
+    if (!r.ok) { document.getElementById('loginErr').style.display='block'; return; }
+    const data = await r.json();
+    token = data.access_token;
+    localStorage.setItem('tournoi_admin_token', token);
+    showAdmin();
+  } catch(e) { document.getElementById('loginErr').style.display='block'; }
+}
+
+function logout() {
+  token = null; localStorage.removeItem('tournoi_admin_token');
+  document.getElementById('shell').style.display='none';
+  document.getElementById('loginWrap').style.display='flex';
+}
+
+function showAdmin() {
+  document.getElementById('loginWrap').style.display='none';
+  document.getElementById('shell').style.display='block';
+  loadTournaments();
+}
+
+function authFetch(url, opts = {}) {
+  const sep = url.includes('?') ? '&' : '?';
+  return fetch(`${API}${url}${sep}token=${token}`, {
+    ...opts,
+    headers: { 'Content-Type': 'application/json', ...(opts.headers||{}) }
+  });
+}
+
+// ═══ NAV ═══
+document.querySelectorAll('.nav-t').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.nav-t').forEach(n=>n.classList.remove('a'));
+    document.querySelectorAll('.sec').forEach(s=>s.classList.remove('a'));
+    t.classList.add('a');
+    document.getElementById(t.dataset.s).classList.add('a');
+    if (t.dataset.s==='config') renderConfig();
+    if (t.dataset.s==='codes') renderCodes();
+    if (t.dataset.s==='brackets') renderBrackets();
+    if (t.dataset.s==='horaire') renderHoraire();
+    if (t.dataset.s==='inscriptions') renderInscriptions();
+  });
+});
+
+// ═══ TOURNAMENTS ═══
+async function loadTournaments() {
+  const r = await authFetch('/admin/tournaments');
+  if (r.status === 401) { logout(); return; }
+  tournaments = await r.json();
+  renderTournamentList();
+  if (tournaments.length && !currentTournament) {
+    await selectTournament(tournaments[0].id);
+  }
+}
+
+function renderTournamentList() {
+  const el = document.getElementById('tournoisList');
+  if (!tournaments.length) { el.innerHTML='<div class="empty"><div class="ic">🏒</div><p>Aucun tournoi. Crée ton premier!</p></div>'; return; }
+  el.innerHTML = tournaments.map(t => `
+    <div class="card" style="cursor:pointer;border:${currentTournament&&currentTournament.id===t.id?'2px solid var(--accent)':'1px solid var(--border)'}" onclick="selectTournament(${t.id})">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><strong style="font-size:1.05rem">${esc(t.name)}</strong><br><span style="font-size:.75rem;color:var(--dim)">/${t.slug}</span></div>
+        <div style="display:flex;gap:.5rem;align-items:center">
+          <span class="badge" style="${t.status==='active'?'background:rgba(45,157,90,.1);color:var(--green)':t.status==='archived'?'background:rgba(170,164,157,.1);color:var(--dim)':''}">${t.status}</span>
+          <button class="btn btn-sm btn-d" onclick="event.stopPropagation();deleteTournament(${t.id})">✕</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function selectTournament(id) {
+  const r = await authFetch(`/admin/tournaments/${id}`);
+  currentTournament = await r.json();
+  // Load divisions
+  const dr = await authFetch(`/admin/tournaments/${id}/divisions`);
+  currentTournament.divisions = await dr.json();
+  renderTournamentList();
+  toast(`${currentTournament.name} sélectionné`);
+}
+
+function showCreateTournament() { document.getElementById('createTournamentForm').style.display='block'; }
+
+async function createTournament() {
+  const name = document.getElementById('ntName').value.trim();
+  const slug = document.getElementById('ntSlug').value.trim();
+  const max = parseInt(document.getElementById('ntMax').value) || 10;
+  const dateVal = document.getElementById('ntDate').value;
+  if (!name||!slug) { toast('Nom et slug requis'); return; }
+  const body = { name, slug, max_players: max };
+  if (dateVal) body.date_event = new Date(dateVal).toISOString();
+  const r = await authFetch('/admin/tournaments', { method:'POST', body: JSON.stringify(body) });
+  if (!r.ok) { const e=await r.json(); toast(e.detail||'Erreur'); return; }
+  document.getElementById('createTournamentForm').style.display='none';
+  await loadTournaments();
+  const created = await r.json();
+  toast('Tournoi créé!');
+}
+
+async function deleteTournament(id) {
+  if (!confirm('Supprimer ce tournoi et toutes ses données?')) return;
+  await authFetch(`/admin/tournaments/${id}`, { method:'DELETE' });
+  if (currentTournament && currentTournament.id === id) currentTournament = null;
+  await loadTournaments();
+  toast('Tournoi supprimé.');
+}
+
+// ═══ CONFIG ═══
+async function renderConfig() {
+  const el = document.getElementById('configContent');
+  if (!currentTournament) { el.innerHTML='<div class="empty"><p>Sélectionne un tournoi d\'abord.</p></div>'; return; }
+  const t = currentTournament;
+
+  let divsHtml = '';
+  for (const d of t.divisions || []) {
+    let teamsHtml = d.teams.map((te, i) => `
+      <div class="trow">
+        <span class="num">${i+1}</span>
+        <input type="text" value="${esc(te.name)}" onchange="updateTeamName(${te.id}, this.value)">
+        <input type="email" value="${esc(te.captain_email||'')}" placeholder="email capitaine" style="max-width:200px;font-size:.8rem" onchange="updateTeamEmail(${te.id}, this.value)">
+        <button class="x" onclick="deleteTeam(${te.id})">✕</button>
+      </div>
+    `).join('');
+
+    divsHtml += `<div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem;padding-bottom:.6rem;border-bottom:1px solid var(--border)">
+        <div style="flex:1"><label>Division</label><input type="text" value="${esc(d.name)}" onchange="updateDivision(${d.id}, this.value)" style="font-weight:600"></div>
+        <button class="btn btn-sm btn-d" onclick="deleteDivision(${d.id})" style="margin-left:.5rem">✕</button>
+      </div>
+      <label>Équipes (${d.teams.length})</label>
+      <div class="tlist">${teamsHtml}</div>
+      <button class="btn btn-sm btn-s" onclick="addTeam(${d.id})">+ Équipe</button>
+    </div>`;
+  }
+
+  el.innerHTML = `
+    <div class="card">
+      <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end">
+        <div style="flex:1;min-width:200px"><label>Nom</label><input type="text" value="${esc(t.name)}" onchange="updateTournament({name:this.value})"></div>
+        <div><label>Max joueurs</label><input type="number" value="${t.max_players}" style="width:80px" onchange="updateTournament({max_players:parseInt(this.value)})"></div>
+        <div><label>Statut</label><select onchange="updateTournament({status:this.value})" style="width:120px"><option value="draft" ${t.status==='draft'?'selected':''}>Brouillon</option><option value="active" ${t.status==='active'?'selected':''}>Actif</option><option value="archived" ${t.status==='archived'?'selected':''}>Archivé</option></select></div>
+        <div><label style="display:flex;align-items:center;gap:.4rem;cursor:pointer"><input type="checkbox" ${t.inscriptions_open?'checked':''} onchange="updateTournament({inscriptions_open:this.checked})" style="width:auto;accent-color:var(--accent)">Inscriptions ouvertes</label></div>
+      </div>
+    </div>
+    ${divsHtml}
+    <button class="btn btn-s" onclick="addDivision()">+ Ajouter une division</button>
+    <div style="margin-top:1.5rem"><button class="btn btn-p" onclick="generateAllBrackets()">Générer tous les brackets →</button></div>
+  `;
+}
+
+async function updateTournament(data) {
+  await authFetch(`/admin/tournaments/${currentTournament.id}`, { method:'PATCH', body:JSON.stringify(data) });
+  await selectTournament(currentTournament.id);
+}
+
+async function addDivision() {
+  const count = (currentTournament.divisions||[]).length;
+  await authFetch(`/admin/tournaments/${currentTournament.id}/divisions`, { method:'POST', body:JSON.stringify({name:`Division ${count+1}`, sort_order:count}) });
+  await selectTournament(currentTournament.id);
+  renderConfig();
+}
+
+async function updateDivision(did, name) {
+  await authFetch(`/admin/divisions/${did}`, { method:'PATCH', body:JSON.stringify({name}) });
+}
+
+async function deleteDivision(did) {
+  if (!confirm('Supprimer cette division?')) return;
+  await authFetch(`/admin/divisions/${did}`, { method:'DELETE' });
+  await selectTournament(currentTournament.id);
+  renderConfig();
+}
+
+async function addTeam(did) {
+  await authFetch(`/admin/divisions/${did}/teams`, { method:'POST', body:JSON.stringify({name:'', seed:0}) });
+  await selectTournament(currentTournament.id);
+  renderConfig();
+}
+
+async function updateTeamName(tid, name) {
+  await authFetch(`/admin/teams/${tid}`, { method:'PATCH', body:JSON.stringify({name}) });
+}
+
+async function updateTeamEmail(tid, email) {
+  await authFetch(`/admin/teams/${tid}`, { method:'PATCH', body:JSON.stringify({captain_email:email}) });
+}
+
+async function deleteTeam(tid) {
+  await authFetch(`/admin/teams/${tid}`, { method:'DELETE' });
+  await selectTournament(currentTournament.id);
+  renderConfig();
+}
+
+// ═══ CODES ═══
+async function generateAllCodes() {
+  const r = await authFetch(`/admin/tournaments/${currentTournament.id}/generate-codes`, {method:'POST'});
+  const data = await r.json();
+  toast(`${data.generated} code(s) généré(s)`);
+  await selectTournament(currentTournament.id);
+  renderCodes();
+}
+
+function renderCodes() {
+  const el = document.getElementById('codesContent');
+  if (!currentTournament) { el.innerHTML='<div class="empty"><p>Sélectionne un tournoi.</p></div>'; return; }
+  let html = '';
+  for (const d of currentTournament.divisions||[]) {
+    html += `<h3 style="margin:1rem 0 .5rem">${esc(d.name)}</h3>`;
+    for (const t of d.teams) {
+      const link = t.access_code ? `${location.origin}/inscription?code=${t.access_code}` : '';
+      html += `<div class="cr">
+        <div class="ti"><div class="tn">${esc(t.name)||'<em style=color:var(--dim)>Sans nom</em>'}</div><div class="dn">${esc(d.name)} ${t.captain_email?'· '+esc(t.captain_email):''}</div></div>
+        ${t.access_code?`<span class="cv">${t.access_code}</span><button class="cp" onclick="copyL(this,'${esc(link)}')">Copier lien</button>${t.code_sent?'<span style="color:var(--green);font-size:.7rem;font-weight:700">✓ Envoyé</span>':''}`:'<span style="color:var(--dim);font-size:.8rem">Aucun code</span>'}
+      </div>`;
+    }
+  }
+  el.innerHTML = html || '<div class="empty"><p>Configure des divisions et équipes.</p></div>';
+}
+
+function copyL(btn, link) {
+  navigator.clipboard.writeText(link).then(() => {
+    btn.textContent='✓ Copié'; btn.classList.add('ok');
+    setTimeout(()=>{btn.textContent='Copier lien';btn.classList.remove('ok')},2000);
+  });
+}
+
+async function sendAllCodes() {
+  if (!currentTournament) return;
+  const teamIds = [];
+  for (const d of currentTournament.divisions||[]) {
+    for (const t of d.teams) {
+      if (t.access_code && t.captain_email && !t.code_sent) teamIds.push(t.id);
+    }
+  }
+  if (!teamIds.length) { toast('Aucun courriel à envoyer (codes manquants ou déjà envoyés)'); return; }
+  if (!confirm(`Envoyer ${teamIds.length} courriel(s)?`)) return;
+  const r = await authFetch('/admin/send-codes', { method:'POST', body:JSON.stringify({team_ids:teamIds}) });
+  const data = await r.json();
+  toast(`${data.sent} courriel(s) envoyé(s)${data.errors.length?' — '+data.errors.length+' erreur(s)':''}`);
+  await selectTournament(currentTournament.id);
+  renderCodes();
+}
+
+function exportCodesCSV() {
+  if (!currentTournament) return;
+  let csv = 'Division,Équipe,Code,Email,Lien\n';
+  for (const d of currentTournament.divisions||[]) {
+    for (const t of d.teams) {
+      const link = t.access_code ? `${location.origin}/inscription?code=${t.access_code}` : '';
+      csv += `"${d.name}","${t.name}","${t.access_code||''}","${t.captain_email||''}","${link}"\n`;
+    }
+  }
+  const blob = new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='codes.csv'; a.click();
+}
+
+// ═══ BRACKETS ═══
+async function generateAllBrackets() {
+  if (!currentTournament) return;
+  for (const d of currentTournament.divisions||[]) {
+    if (d.teams.filter(t=>t.name.trim()).length < 2) { toast(`${d.name}: au moins 2 équipes requises`); return; }
+  }
+  for (const d of currentTournament.divisions||[]) {
+    const r = await authFetch(`/admin/divisions/${d.id}/generate-bracket`, {method:'POST'});
+    if (!r.ok) { const e = await r.json(); toast(e.detail||'Erreur'); return; }
+  }
+  toast('Brackets générés!');
+  // Switch to brackets tab
+  document.querySelectorAll('.nav-t').forEach(n=>n.classList.remove('a'));
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('a'));
+  document.querySelector('[data-s="brackets"]').classList.add('a');
+  document.getElementById('brackets').classList.add('a');
+  renderBrackets();
+}
+
+let adminBDiv = null;
+async function renderBrackets() {
+  const el = document.getElementById('bracketsContent');
+  if (!currentTournament) { el.innerHTML='<div class="empty"><p>Sélectionne un tournoi.</p></div>'; return; }
+  const divs = currentTournament.divisions||[];
+  if (!divs.length) { el.innerHTML='<div class="empty"><p>Ajoute des divisions.</p></div>'; return; }
+  if (!adminBDiv) adminBDiv = divs[0].id;
+
+  // Load matches for active division
+  const r = await authFetch(`/admin/divisions/${adminBDiv}/matches`);
+  const matches = r.ok ? await r.json() : [];
+
+  const pills = divs.map(d=>`<div class="pill ${d.id==adminBDiv?'a':''}" onclick="adminBDiv=${d.id};renderBrackets()">${esc(d.name)}</div>`).join('');
+
+  if (!matches.length) { el.innerHTML = `<div class="pills">${pills}</div><div class="empty"><p>Bracket pas encore généré.</p></div>`; return; }
+
+  const maxR = Math.max(...matches.map(m=>m.round_number));
+  const rn = {};
+  for(let r=1;r<=maxR;r++){const rem=maxR-r;if(rem===0)rn[r]='Finale';else if(rem===1)rn[r]='Demi-finales';else if(rem===2)rn[r]='Quarts';else rn[r]=`Ronde ${r}`;}
+
+  let bHtml = '<div style="overflow-x:auto;padding:1rem 0"><div style="display:flex;gap:2.5rem;min-width:max-content">';
+  for (let r=1;r<=maxR;r++) {
+    const rm = matches.filter(m=>m.round_number===r).sort((a,b)=>a.position-b.position);
+    bHtml += `<div style="display:flex;flex-direction:column;gap:1.2rem;min-width:260px"><div style="font-size:.8rem;color:var(--accent);text-align:center;font-weight:700;text-transform:uppercase;letter-spacing:2px;margin-bottom:.4rem">${rn[r]}</div>`;
+    for (const m of rm) {
+      const isBye = (m.team1_id&&!m.team2_id&&m.winner_id)||(!m.team1_id&&m.team2_id&&m.winner_id);
+      if (isBye && r===1) continue;
+      const t1w = m.winner_id&&m.winner_id===m.team1_id;
+      const t2w = m.winner_id&&m.winner_id===m.team2_id;
+      const dis = !m.team1_id||!m.team2_id ? 'disabled' : '';
+      bHtml += `<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden">
+        <div style="display:flex;align-items:center;padding:.5rem .65rem;gap:.4rem;border-bottom:1px solid var(--border);${t1w?'background:var(--accent-bg)':''}"><span style="flex:1;font-size:.82rem;font-weight:500;${!m.team1_name?'color:var(--dim);font-style:italic':''}">${m.team1_name||'TBD'}</span><input type="number" style="width:3rem;text-align:center;padding:.2rem;font-weight:700;background:var(--bg);border:1px solid var(--border);border-radius:4px;font-size:.82rem" value="${m.score1!=null?m.score1:''}" ${dis} onchange="updateMatchScore(${m.id}, 'score1', this.value)"></div>
+        <div style="display:flex;align-items:center;padding:.5rem .65rem;gap:.4rem;${t2w?'background:var(--accent-bg)':''}"><span style="flex:1;font-size:.82rem;font-weight:500;${!m.team2_name?'color:var(--dim);font-style:italic':''}">${m.team2_name||'TBD'}</span><input type="number" style="width:3rem;text-align:center;padding:.2rem;font-weight:700;background:var(--bg);border:1px solid var(--border);border-radius:4px;font-size:.82rem" value="${m.score2!=null?m.score2:''}" ${dis} onchange="updateMatchScore(${m.id}, 'score2', this.value)"></div>
+      </div>`;
+    }
+    bHtml += '</div>';
+  }
+  bHtml += '</div></div>';
+  el.innerHTML = `<div class="pills">${pills}</div>${bHtml}`;
+}
+
+async function updateMatchScore(mid, field, val) {
+  const body = {};
+  body[field] = val !== '' ? parseInt(val) : null;
+  await authFetch(`/admin/matches/${mid}`, { method:'PATCH', body:JSON.stringify(body) });
+  renderBrackets();
+}
+
+// ═══ HORAIRE ═══
+let adminHDiv = null;
+async function renderHoraire() {
+  const el = document.getElementById('horaireContent');
+  if (!currentTournament) { el.innerHTML='<div class="empty"><p>Sélectionne un tournoi.</p></div>'; return; }
+  const divs = currentTournament.divisions||[];
+  if (!divs.length) { el.innerHTML='<div class="empty"><p>Ajoute des divisions.</p></div>'; return; }
+  if (!adminHDiv) adminHDiv = divs[0].id;
+
+  const r = await authFetch(`/admin/divisions/${adminHDiv}/matches`);
+  const matches = r.ok ? await r.json() : [];
+
+  const pills = `<div class="pills">${divs.map(d=>`<div class="pill ${d.id==adminHDiv?'a':''}" onclick="adminHDiv=${d.id};renderHoraire()">${esc(d.name)}</div>`).join('')}</div>`;
+
+  if (!matches.length) { el.innerHTML=pills+'<div class="empty"><p>Bracket pas encore généré.</p></div>'; return; }
+
+  const active = matches.filter(m => {
+    const isBye = (m.team1_id&&!m.team2_id&&m.winner_id)||(!m.team1_id&&m.team2_id&&m.winner_id);
+    return !(isBye && m.round_number===1);
+  });
+
+  let html = pills + '<div style="display:flex;flex-direction:column;gap:.5rem">';
+  for (const m of active) {
+    html += `<div style="display:grid;grid-template-columns:6rem 1fr 2.5rem 1fr 5rem;gap:.5rem;align-items:center;padding:.7rem;background:var(--card);border:1px solid var(--border);border-radius:var(--r);font-size:.85rem">
+      <input type="time" value="${m.match_time||''}" onchange="updateMatchMeta(${m.id},'match_time',this.value)" style="text-align:center">
+      <span style="text-align:right;font-weight:500">${m.team1_name||'TBD'}</span>
+      <span style="text-align:center;color:var(--dim);font-weight:700">VS</span>
+      <span style="font-weight:500">${m.team2_name||'TBD'}</span>
+      <input type="text" value="${m.terrain||''}" placeholder="Terrain" onchange="updateMatchMeta(${m.id},'terrain',this.value)" style="text-align:center">
+    </div>`;
+  }
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+async function updateMatchMeta(mid, field, val) {
+  const body = {};
+  body[field] = val;
+  await authFetch(`/admin/matches/${mid}`, { method:'PATCH', body:JSON.stringify(body) });
+}
+
+// ═══ INSCRIPTIONS ═══
+async function renderInscriptions() {
+  const el = document.getElementById('inscriptionsContent');
+  if (!currentTournament) { el.innerHTML='<div class="empty"><p>Sélectionne un tournoi.</p></div>'; return; }
+  let html = '';
+  for (const d of currentTournament.divisions||[]) {
+    for (const t of d.teams) {
+      const r = await authFetch(`/admin/teams/${t.id}/players`);
+      const players = r.ok ? await r.json() : [];
+      html += `<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;padding-bottom:.5rem;border-bottom:1px solid var(--border)"><div><span class="badge">${esc(d.name)}</span><strong style="margin-left:.4rem">${esc(t.name)}</strong></div><span style="font-size:.8rem;color:var(--muted)">${players.length}/${currentTournament.max_players}</span></div>`;
+      if (!players.length) { html += '<p style="color:var(--dim);font-size:.82rem">Aucun joueur.</p>'; }
+      else {
+        html += '<table style="width:100%;border-collapse:collapse;font-size:.82rem"><thead><tr style="border-bottom:1px solid var(--border)"><th style="padding:.3rem;color:var(--muted);font-size:.65rem;text-transform:uppercase;text-align:left">#</th><th style="padding:.3rem;text-align:left;color:var(--muted);font-size:.65rem;text-transform:uppercase">Nom</th><th style="padding:.3rem;text-align:left;color:var(--muted);font-size:.65rem;text-transform:uppercase">Chandail</th><th style="padding:.3rem;text-align:left;color:var(--muted);font-size:.65rem;text-transform:uppercase">NBHPA</th><th></th></tr></thead><tbody>';
+        players.forEach((p,i) => {
+          html += `<tr style="border-bottom:1px solid var(--border)"><td style="padding:.3rem;color:var(--dim)">${i+1}</td><td style="padding:.3rem;font-weight:500">${esc(p.name)}</td><td style="padding:.3rem">${esc(p.jersey_number)}</td><td style="padding:.3rem">${esc(p.nbhpa||'')}</td><td style="padding:.3rem"><button class="btn btn-sm btn-d" onclick="deletePlayerAdmin(${p.id})">✕</button></td></tr>`;
+        });
+        html += '</tbody></table>';
+      }
+      html += '</div>';
+    }
+  }
+  el.innerHTML = html || '<div class="empty"><p>Aucune équipe configurée.</p></div>';
+}
+
+async function deletePlayerAdmin(pid) {
+  await authFetch(`/admin/players/${pid}`, {method:'DELETE'});
+  renderInscriptions();
+  toast('Joueur retiré.');
+}
+
+// ═══ UTILS ═══
+function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+function toast(m){const el=document.getElementById('toast');el.textContent=m;el.classList.add('s');setTimeout(()=>el.classList.remove('s'),2500);}
+
+// ═══ INIT ═══
+if (token) { showAdmin(); } else { document.getElementById('loginWrap').style.display='flex'; }
+</script>
+</body>
+</html>

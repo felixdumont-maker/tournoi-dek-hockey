@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inscription — Tournoi Dek Hockey</title>
+<style>
+:root{--bg:#FAF7F3;--card:#fff;--border:#E0DBD4;--text:#2C2C2C;--muted:#7A7570;--dim:#AAA49D;--accent:#c5a55a;--accent-h:#b8963f;--accent-bg:rgba(197,165,90,.1);--green:#2d9d5a;--red:#c0392b;--r:8px;--rl:12px;--shadow:0 2px 12px rgba(0,0,0,.06)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+.hdr{background:var(--card);border-bottom:1px solid var(--border);padding:1.5rem 1rem;text-align:center}
+.hdr h1{font-size:1.4rem;letter-spacing:2px;text-transform:uppercase}.hdr h1 .g{color:var(--accent)}
+.hdr .sub{font-size:.85rem;color:var(--muted);margin-top:.25rem}
+
+main{max-width:650px;margin:0 auto;padding:2rem 1rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:1.5rem;margin-bottom:1.5rem;box-shadow:var(--shadow)}
+.msg{text-align:center;padding:3rem 1.5rem;background:var(--card);border:1px solid var(--border);border-radius:var(--rl)}
+.msg .ic{font-size:2.5rem;margin-bottom:1rem;opacity:.4}.msg h2{font-size:1.2rem;margin-bottom:.5rem}.msg p{color:var(--muted);font-size:.9rem}
+
+label{display:block;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:.4rem}
+input[type=text]{width:100%;padding:.65rem .8rem;background:var(--bg);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-family:inherit;font-size:.9rem;outline:none;transition:border-color .2s}
+input:focus{border-color:var(--accent)}
+.fg{margin-bottom:1.15rem}
+
+.btn{display:flex;align-items:center;justify-content:center;gap:.5rem;padding:.7rem 1.5rem;font-family:inherit;font-size:.82rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;border:none;border-radius:var(--r);cursor:pointer;transition:.2s;width:100%}
+.btn-p{background:var(--accent);color:#fff}.btn-p:hover{background:var(--accent-h)}
+.btn-s{background:transparent;border:1px solid var(--border);color:var(--muted)}.btn-s:hover{border-color:var(--muted);color:var(--text)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+.badge{display:inline-block;padding:.2rem .6rem;border-radius:50px;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;background:var(--accent-bg);color:var(--accent)}
+.cnt{display:flex;justify-content:space-between;padding:.5rem 0;font-size:.8rem;color:var(--muted)}.cnt .c{font-weight:700;color:var(--accent)}
+
+.pl{margin:1rem 0}.pi{display:flex;align-items:center;gap:.7rem;padding:.6rem .7rem;border-bottom:1px solid var(--border);font-size:.88rem}
+.pi:last-child{border-bottom:none}
+.pi .n{width:1.4rem;height:1.4rem;border-radius:50%;background:var(--accent-bg);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;flex-shrink:0}
+.pi .inf{flex:1}.pi .inf .pn{font-weight:600}.pi .inf .meta{font-size:.72rem;color:var(--muted)}
+.pi .rm{background:none;border:none;color:var(--dim);cursor:pointer;font-size:1rem;transition:color .2s}.pi .rm:hover{color:var(--red)}
+
+.ok{text-align:center;padding:2rem}
+.ok .ch{width:3.5rem;height:3.5rem;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.6rem;margin:0 auto 1rem}
+.ok h2{font-size:1.2rem;margin-bottom:.5rem}.ok p{color:var(--muted);font-size:.88rem;margin-bottom:1.5rem}
+
+.toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(80px);background:var(--text);color:var(--bg);padding:.7rem 1.3rem;border-radius:var(--r);font-size:.82rem;font-weight:600;opacity:0;transition:.3s;z-index:99}
+.toast.s{transform:translateX(-50%) translateY(0);opacity:1}
+
+@media(max-width:500px){main{padding:1rem}.hdr h1{font-size:1.1rem}}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <h1><span class="g" id="hTitle">Tournoi</span> — Inscription</h1>
+  <p class="sub">Inscris les joueurs de ton équipe</p>
+</div>
+<main id="app"><div class="msg"><div class="ic">⏳</div><h2>Chargement...</h2></div></main>
+<div class="toast" id="toast"></div>
+<script>
+const API='/api';
+let info=null,confirmed=false;
+
+async function init(){
+  const code=new URLSearchParams(location.search).get('code');
+  if(!code){showMsg('🔑',"Code d'accès requis","Vérifie le courriel reçu après ton paiement.");return;}
+  try{
+    const r=await fetch(`${API}/inscription/${code}`);
+    if(r.status===403){showMsg('🔒','Inscriptions fermées','Les inscriptions sont présentement fermées.');return;}
+    if(!r.ok){showMsg('⚠️','Code invalide','Ce code n\'est pas reconnu. Contacte l\'organisateur.');return;}
+    info=await r.json();
+    info.code=code;
+    if(info.tournament_name)document.getElementById('hTitle').textContent=info.tournament_name;
+    render();
+  }catch(e){showMsg('⚠️','Erreur','Impossible de charger les données.');}
+}
+
+function showMsg(ic,t,m){document.getElementById('app').innerHTML=`<div class="msg"><div class="ic">${ic}</div><h2>${t}</h2><p>${m}</p></div>`;}
+
+function render(){
+  const app=document.getElementById('app');
+  if(confirmed){
+    app.innerHTML=`<div class="card ok"><div class="ch">✓</div><h2>Inscription confirmée!</h2><p>${esc(info.team_name)} — ${esc(info.division_name)}<br>${info.players.length} joueur${info.players.length>1?'s':''}</p><button class="btn btn-s" onclick="confirmed=false;render()">Modifier</button></div>`;
+    return;
+  }
+  const full=info.players.length>=info.max_players;
+  let pl='';
+  if(info.players.length){
+    pl='<div class="pl">';
+    info.players.forEach((p,i)=>{
+      pl+=`<div class="pi"><span class="n">${i+1}</span><div class="inf"><span class="pn">${esc(p.name)}</span><span class="meta">#${esc(p.jersey_number)} ${p.nbhpa?'· NBHPA: '+esc(p.nbhpa):''}</span></div><button class="rm" onclick="removeP(${p.id})">✕</button></div>`;
+    });
+    pl+='</div>';
+  }
+  app.innerHTML=`<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div><span class="badge">${esc(info.division_name)}</span><strong style="margin-left:.5rem;font-size:1.05rem">${esc(info.team_name)}</strong></div></div>
+    <div class="cnt"><span>Joueurs inscrits</span><span><span class="c">${info.players.length}</span> / ${info.max_players}</span></div>
+    ${pl}
+    ${!full?`<div style="margin-top:1.2rem;padding-top:1.2rem;border-top:1px solid var(--border)">
+      <h3 style="font-size:.95rem;margin-bottom:1rem">Ajouter un joueur</h3>
+      <div class="fg"><label>Nom complet</label><input type="text" id="pN" placeholder="Jean Tremblay"></div>
+      <div style="display:flex;gap:.7rem"><div class="fg" style="flex:1"><label>Numéro de chandail</label><input type="text" id="pJ" placeholder="17"></div><div class="fg" style="flex:1"><label>Numéro NBHPA</label><input type="text" id="pB" placeholder="Optionnel"></div></div>
+      <button class="btn btn-p" onclick="addP()">+ Ajouter</button></div>`:`<div style="text-align:center;padding:1rem 0;color:var(--green);font-weight:600">✓ Alignement complet</div>`}
+    ${info.players.length?`<div style="margin-top:1.2rem;padding-top:1rem;border-top:1px solid var(--border)"><button class="btn btn-p" onclick="confirmed=true;render()" style="background:var(--green)">✓ Confirmer</button></div>`:''}
+  </div>`;
+}
+
+async function addP(){
+  const name=document.getElementById('pN').value.trim();
+  const jersey=document.getElementById('pJ').value.trim();
+  const nbhpa=document.getElementById('pB').value.trim();
+  if(!name){toast('Entre le nom.');return;}
+  if(!jersey){toast('Entre le numéro de chandail.');return;}
+  try{
+    const r=await fetch(`${API}/inscription/${info.code}/players`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,jersey_number:jersey,nbhpa:nbhpa||null})});
+    if(!r.ok){const e=await r.json();toast(e.detail||'Erreur');return;}
+    const p=await r.json();
+    info.players.push(p);
+    toast(`${name} ajouté!`);
+    render();
+  }catch(e){toast('Erreur réseau.');}
+}
+
+async function removeP(id){
+  try{
+    await fetch(`${API}/inscription/${info.code}/players/${id}`,{method:'DELETE'});
+    info.players=info.players.filter(p=>p.id!==id);
+    toast('Joueur retiré.');
+    render();
+  }catch(e){toast('Erreur.');}
+}
+
+function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+function toast(m){const el=document.getElementById('toast');el.textContent=m;el.classList.add('s');setTimeout(()=>el.classList.remove('s'),2500);}
+
+init();
+</script>
+</body>
+</html>

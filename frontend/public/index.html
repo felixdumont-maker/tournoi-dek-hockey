@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tournoi Dek Hockey</title>
+<style>
+:root {
+  --bg:#FAF7F3;--card:#fff;--border:#E0DBD4;--text:#2C2C2C;--muted:#7A7570;--dim:#AAA49D;
+  --accent:#c5a55a;--accent-h:#b8963f;--accent-bg:rgba(197,165,90,0.1);
+  --green:#2d9d5a;--red:#c0392b;--r:8px;--rl:12px;--shadow:0 2px 12px rgba(0,0,0,0.06);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* HEADER */
+.hdr{background:var(--card);border-bottom:1px solid var(--border);padding:1.5rem 1rem;text-align:center}
+.hdr h1{font-size:1.8rem;letter-spacing:3px;text-transform:uppercase;font-weight:800}
+.hdr h1 .g{color:var(--accent)}
+.hdr .sub{font-size:.85rem;color:var(--muted);margin-top:.25rem}
+.live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:.4rem;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* NAV */
+.nav{display:flex;background:var(--card);border-bottom:1px solid var(--border);justify-content:center}
+.nav-t{padding:.85rem 1.5rem;cursor:pointer;font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);border-bottom:2px solid transparent;transition:.2s}
+.nav-t:hover{color:var(--text)}
+.nav-t.a{color:var(--accent);border-color:var(--accent)}
+
+main{max-width:1000px;margin:0 auto;padding:1.5rem 1rem}
+.sec{display:none}.sec.a{display:block}
+
+/* PILLS */
+.pills{display:flex;gap:.4rem;margin-bottom:1.5rem;flex-wrap:wrap;justify-content:center}
+.pill{padding:.45rem 1rem;background:var(--card);border:1px solid var(--border);border-radius:50px;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;cursor:pointer;color:var(--muted);transition:.2s}
+.pill:hover{border-color:var(--muted);color:var(--text)}
+.pill.a{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+.badge{display:inline-block;padding:.1rem .5rem;border-radius:50px;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;background:var(--accent-bg);color:var(--accent)}
+
+/* MATCH CARD */
+.ml{display:flex;flex-direction:column;gap:.6rem}
+.mc{display:grid;grid-template-columns:4.5rem 1fr 3.5rem 1fr auto;align-items:center;gap:.5rem;padding:.75rem 1rem;background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);font-size:.9rem;transition:border-color .3s}
+.mc.updated{border-color:var(--accent);box-shadow:0 0 12px rgba(197,165,90,.2)}
+.mc .time{font-size:.75rem;color:var(--muted);font-weight:600;text-align:center}
+.mc .time .ter{font-size:.6rem;color:var(--dim);display:block}
+.mc .tm{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mc .tm.r{text-align:right}
+.mc .tm.w{color:var(--accent);font-weight:700}
+.mc .tm.tbd{color:var(--dim);font-style:italic}
+.mc .sc{display:flex;align-items:center;justify-content:center;gap:.3rem}
+.mc .sc .s{padding:.15rem .45rem;border-radius:4px;min-width:1.4rem;text-align:center;font-weight:800;font-size:.95rem}
+.mc .sc .s.w{background:var(--accent);color:#fff}
+.mc .sc .vs{color:var(--dim);font-size:.7rem;font-weight:700}
+.mc .meta{display:flex;flex-direction:column;align-items:flex-end;gap:.1rem}
+.mc .meta .rnd{font-size:.6rem;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;font-weight:700}
+
+/* BRACKET */
+.bc{overflow-x:auto;padding:1rem 0;-webkit-overflow-scrolling:touch}
+.bk{display:flex;gap:2.5rem;align-items:flex-start;min-width:max-content}
+.rd{display:flex;flex-direction:column;gap:1.25rem;min-width:240px}
+.rd-t{font-size:.8rem;letter-spacing:2px;color:var(--accent);text-align:center;margin-bottom:.4rem;text-transform:uppercase;font-weight:700}
+.mk{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;transition:border-color .3s}
+.mk.updated{border-color:var(--accent)}
+.mt{display:flex;align-items:center;padding:.5rem .65rem;gap:.4rem;border-bottom:1px solid var(--border);font-size:.8rem}
+.mt:last-child{border-bottom:none}
+.mt.w{background:var(--accent-bg)}
+.mt .tn{flex:1;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mt .tn.tbd{color:var(--dim);font-style:italic}
+.mt .sv{font-weight:800;min-width:1.2rem;text-align:center;font-size:.85rem}
+.mt.w .sv{color:var(--accent)}
+
+/* CHAMPION */
+.champ{background:linear-gradient(135deg,rgba(197,165,90,.12),rgba(197,165,90,.04));border:1px solid var(--accent);border-radius:var(--rl);padding:1.2rem;margin-bottom:1rem;display:flex;align-items:center;gap:1rem;justify-content:center;animation:fadeIn .5s}
+.champ .tr{font-size:1.5rem}
+.champ .ct{font-size:1.1rem;font-weight:800;letter-spacing:1px}
+.champ .cn{color:var(--accent)}
+
+.empty{text-align:center;padding:3rem 1rem;color:var(--dim)}
+.empty .ic{font-size:3rem;margin-bottom:1rem;opacity:.3}
+
+/* TOURNAMENT SELECTOR */
+.t-sel{display:flex;justify-content:center;margin-bottom:1rem}
+.t-sel select{padding:.5rem 1rem;border:1px solid var(--border);border-radius:var(--r);background:var(--card);font-size:.9rem;color:var(--text);font-family:inherit}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* MOBILE */
+@media(max-width:650px){
+  .mc{grid-template-columns:1fr;gap:.15rem;text-align:center;padding:.65rem}
+  .mc .tm.r{text-align:center}
+  .mc .meta{align-items:center;flex-direction:row;gap:.5rem;justify-content:center;margin-top:.25rem}
+  .hdr h1{font-size:1.3rem}
+  .nav-t{padding:.7rem .8rem;font-size:.7rem}
+}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <h1><span class="g" id="tName">Tournoi</span></h1>
+  <p class="sub" id="tSub"><span class="live-dot" id="liveDot" style="display:none"></span><span id="liveText">Chargement...</span></p>
+</div>
+
+<nav class="nav">
+  <div class="nav-t a" data-s="horaire">Horaire & Résultats</div>
+  <div class="nav-t" data-s="brackets">Brackets</div>
+</nav>
+
+<main>
+  <div class="t-sel" id="tSel" style="display:none">
+    <select id="tSelect" onchange="loadTournament(this.value)"></select>
+  </div>
+
+  <section id="horaire" class="sec a">
+    <div class="pills" id="sPills"></div>
+    <div id="sCont"></div>
+  </section>
+
+  <section id="brackets" class="sec">
+    <div class="pills" id="bPills"></div>
+    <div id="bCont"></div>
+  </section>
+</main>
+
+<script>
+const API = '/api';
+let T = null; // current tournament data
+let ws = null;
+let sDiv = 'all', bDiv = null;
+let updatedMatches = new Set();
+
+// ── NAV ──
+document.querySelectorAll('.nav-t').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.nav-t').forEach(n=>n.classList.remove('a'));
+    document.querySelectorAll('.sec').forEach(s=>s.classList.remove('a'));
+    t.classList.add('a');
+    document.getElementById(t.dataset.s).classList.add('a');
+  });
+});
+
+// ── INIT ──
+async function init() {
+  try {
+    const res = await fetch(`${API}/public/tournaments`);
+    const list = await res.json();
+    if (!list.length) { showEmpty(); return; }
+
+    if (list.length > 1) {
+      document.getElementById('tSel').style.display = 'flex';
+      const sel = document.getElementById('tSelect');
+      sel.innerHTML = list.map(t => `<option value="${t.slug}">${t.name}${t.status==='archived'?' (archivé)':''}</option>`).join('');
+    }
+
+    // Load first active, or first
+    const active = list.find(t=>t.status==='active') || list[0];
+    await loadTournament(active.slug);
+  } catch(e) {
+    showEmpty();
+  }
+}
+
+async function loadTournament(slug) {
+  try {
+    const res = await fetch(`${API}/public/tournaments/${slug}`);
+    T = await res.json();
+    document.getElementById('tName').textContent = T.name;
+    document.getElementById('liveText').textContent = 'Horaire et résultats en direct';
+    document.getElementById('liveDot').style.display = 'inline-block';
+
+    if (!bDiv && T.divisions.length) bDiv = T.divisions[0].id;
+    renderSchedule();
+    renderBrackets();
+    connectWS(slug);
+  } catch(e) { showEmpty(); }
+}
+
+function showEmpty() {
+  document.getElementById('sCont').innerHTML = '<div class="empty"><div class="ic">🏒</div><p>Aucun tournoi disponible pour le moment.</p></div>';
+}
+
+// ── WEBSOCKET ──
+function connectWS(slug) {
+  if (ws) { try { ws.close(); } catch(e){} }
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  ws = new WebSocket(`${proto}//${location.host}/ws/${slug}`);
+  ws.onmessage = (e) => {
+    try {
+      const data = JSON.parse(e.data);
+      if (data.type === 'match_update' && T) {
+        // Update local data
+        const div = T.divisions.find(d => d.id === data.division_id);
+        if (div) {
+          // Track which matches changed
+          const oldMatches = new Map(div.matches.map(m => [m.id, m]));
+          div.matches = data.matches;
+          data.matches.forEach(m => {
+            const old = oldMatches.get(m.id);
+            if (!old || old.score1 !== m.score1 || old.score2 !== m.score2 || old.winner_id !== m.winner_id) {
+              updatedMatches.add(m.id);
+              setTimeout(() => { updatedMatches.delete(m.id); renderSchedule(); renderBrackets(); }, 3000);
+            }
+          });
+          renderSchedule();
+          renderBrackets();
+        }
+      }
+    } catch(err) {}
+  };
+  ws.onclose = () => { setTimeout(() => connectWS(slug), 5000); };
+}
+
+// ── SCHEDULE ──
+function renderSchedule() {
+  if (!T) return;
+  const pills = document.getElementById('sPills');
+  const cont = document.getElementById('sCont');
+
+  pills.innerHTML = `<div class="pill ${sDiv==='all'?'a':''}" onclick="sDiv='all';renderSchedule()">Toutes</div>` +
+    T.divisions.map(d => `<div class="pill ${d.id==sDiv?'a':''}" onclick="sDiv=${d.id};renderSchedule()">${esc(d.name)}</div>`).join('');
+
+  const divs = sDiv === 'all' ? T.divisions : T.divisions.filter(d=>d.id==sDiv);
+  let allM = [];
+
+  for (const d of divs) {
+    const rn = roundNames(d.matches);
+    d.matches.forEach(m => {
+      if (isBye(m) && m.round_number === 1) return;
+      allM.push({...m, divName: d.name, roundName: rn[m.round_number] || `Ronde ${m.round_number}`});
+    });
+  }
+
+  allM.sort((a,b) => {
+    if (a.match_time && b.match_time) return a.match_time.localeCompare(b.match_time);
+    if (a.match_time) return -1; if (b.match_time) return 1;
+    return a.round_number - b.round_number;
+  });
+
+  if (!allM.length) { cont.innerHTML = '<div class="empty"><div class="ic">📋</div><p>L\'horaire n\'est pas encore disponible.</p></div>'; return; }
+
+  let html = '<div class="ml">';
+  for (const m of allM) {
+    const hs = m.score1 != null && m.score2 != null;
+    const t1w = hs && m.score1 > m.score2;
+    const t2w = hs && m.score2 > m.score1;
+    const upd = updatedMatches.has(m.id) ? ' updated' : '';
+
+    html += `<div class="mc${upd}">
+      <div class="time">${m.match_time||'—'}<span class="ter">${m.terrain?'Terrain '+m.terrain:''}</span></div>
+      <div class="tm r ${t1w?'w':''} ${!m.team1_name?'tbd':''}">${m.team1_name||'TBD'}</div>
+      <div class="sc">${hs?`<span class="s ${t1w?'w':''}">${m.score1}</span><span style="color:var(--dim)">-</span><span class="s ${t2w?'w':''}">${m.score2}</span>`:'<span class="vs">VS</span>'}</div>
+      <div class="tm ${t2w?'w':''} ${!m.team2_name?'tbd':''}">${m.team2_name||'TBD'}</div>
+      <div class="meta"><span class="badge">${esc(m.divName)}</span><span class="rnd">${esc(m.roundName)}</span></div>
+    </div>`;
+  }
+  html += '</div>';
+  cont.innerHTML = html;
+}
+
+// ── BRACKETS ──
+function renderBrackets() {
+  if (!T) return;
+  const pills = document.getElementById('bPills');
+  const cont = document.getElementById('bCont');
+
+  if (!T.divisions.length) { pills.innerHTML=''; cont.innerHTML='<div class="empty"><div class="ic">🏒</div><p>Brackets non disponibles.</p></div>'; return; }
+  if (!bDiv) bDiv = T.divisions[0].id;
+
+  pills.innerHTML = T.divisions.map(d => `<div class="pill ${d.id==bDiv?'a':''}" onclick="bDiv=${d.id};renderBrackets()">${esc(d.name)}</div>`).join('');
+
+  const div = T.divisions.find(d=>d.id==bDiv);
+  if (!div || !div.matches.length) { cont.innerHTML='<div class="empty"><p>Bracket pas encore généré.</p></div>'; return; }
+
+  const rn = roundNames(div.matches);
+  const maxRound = Math.max(...div.matches.map(m=>m.round_number));
+  const finalMatch = div.matches.find(m=>m.round_number===maxRound && m.position===0);
+
+  let html = '';
+  if (finalMatch && finalMatch.winner_name) {
+    html += `<div class="champ"><span class="tr">🏆</span><span class="ct">Champion ${esc(div.name)} : <span class="cn">${esc(finalMatch.winner_name)}</span></span></div>`;
+  }
+
+  html += '<div class="bc"><div class="bk">';
+  for (let r = 1; r <= maxRound; r++) {
+    const rm = div.matches.filter(m=>m.round_number===r).sort((a,b)=>a.position-b.position);
+    html += `<div class="rd"><div class="rd-t">${rn[r]||'Ronde '+r}</div>`;
+    for (const m of rm) {
+      if (isBye(m) && r === 1) continue;
+      const t1w = m.winner_id && m.winner_id === m.team1_id;
+      const t2w = m.winner_id && m.winner_id === m.team2_id;
+      const upd = updatedMatches.has(m.id) ? ' updated' : '';
+      html += `<div class="mk${upd}">
+        <div class="mt${t1w?' w':''}"><span class="tn ${m.team1_name?'':'tbd'}">${m.team1_name||'À déterminer'}</span><span class="sv">${m.score1!=null?m.score1:''}</span></div>
+        <div class="mt${t2w?' w':''}"><span class="tn ${m.team2_name?'':'tbd'}">${m.team2_name||'À déterminer'}</span><span class="sv">${m.score2!=null?m.score2:''}</span></div>
+      </div>`;
+    }
+    html += '</div>';
+  }
+  html += '</div></div>';
+  cont.innerHTML = html;
+}
+
+// ── UTILS ──
+function isBye(m) {
+  return (m.team1_id && !m.team2_id && m.winner_id) || (!m.team1_id && m.team2_id && m.winner_id);
+}
+
+function roundNames(matches) {
+  if (!matches.length) return {};
+  const maxR = Math.max(...matches.map(m=>m.round_number));
+  const names = {};
+  for (let r=1;r<=maxR;r++) {
+    const rem = maxR - r;
+    if (rem===0) names[r]='Finale';
+    else if (rem===1) names[r]='Demi-finales';
+    else if (rem===2) names[r]='Quarts de finale';
+    else names[r]=`Ronde ${r}`;
+  }
+  return names;
+}
+
+function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+init();
+</script>
+</body>
+</html>
