@@ -1,6 +1,6 @@
 from sqlalchemy import (
     Column, Integer, String, Boolean, DateTime, ForeignKey, Text, Enum as SAEnum,
-    create_engine, event
+    create_engine, event, text
 )
 from sqlalchemy.orm import relationship, declarative_base, sessionmaker
 from datetime import datetime, timezone
@@ -48,6 +48,8 @@ class Tournament(Base):
     date_event = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=now_utc)
     updated_at = Column(DateTime, default=now_utc, onupdate=now_utc)
+    surface_one_name = Column(String(80), nullable=False, default="Surface 1 - Shawinigan")
+    surface_two_name = Column(String(80), nullable=False, default="Surface 2 - Shawinigan")
 
     divisions = relationship("Division", back_populates="tournament", cascade="all, delete-orphan")
 
@@ -118,3 +120,14 @@ class Match(Base):
 
 def init_db():
     Base.metadata.create_all(bind=engine)
+    # Progressive migration for existing deployments
+    with engine.begin() as conn:
+        for sql in [
+            "ALTER TABLE tournaments ADD COLUMN surface_one_name VARCHAR(80) NOT NULL DEFAULT 'Surface 1 - Shawinigan'",
+            "ALTER TABLE tournaments ADD COLUMN surface_two_name VARCHAR(80) NOT NULL DEFAULT 'Surface 2 - Shawinigan'",
+        ]:
+            try:
+                conn.execute(text(sql))
+            except Exception:
+                # Column probably already exists
+                pass

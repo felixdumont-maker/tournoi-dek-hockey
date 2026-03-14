@@ -612,7 +612,10 @@ def list_public_tournaments(db: Session = Depends(get_db)):
     tournaments = db.query(Tournament).filter(
         Tournament.status.in_([TournamentStatus.ACTIVE, TournamentStatus.ARCHIVED])
     ).order_by(Tournament.date_event.desc()).all()
-    return [{"id": t.id, "name": t.name, "slug": t.slug, "status": t.status.value, "date_event": t.date_event} for t in tournaments]
+    return [{
+        "id": t.id, "name": t.name, "slug": t.slug, "status": t.status.value, "date_event": t.date_event,
+        "surface_one_name": t.surface_one_name, "surface_two_name": t.surface_two_name
+    } for t in tournaments]
 
 
 @app.get("/api/public/tournaments/{slug}")
@@ -626,6 +629,8 @@ def get_public_tournament(slug: str, db: Session = Depends(get_db)):
         "id": t.id, "name": t.name, "slug": t.slug, "status": t.status.value,
         "max_players": t.max_players, "inscriptions_open": t.inscriptions_open,
         "date_event": t.date_event,
+        "surface_one_name": t.surface_one_name,
+        "surface_two_name": t.surface_two_name,
         "divisions": []
     }
 
@@ -710,3 +715,4 @@ async def _broadcast_update(division_id: int, db: Session):
 @app.get("/api/health")
 def health():
     return {"status": "ok", "timestamp": datetime.now(timezone.utc).isoformat()}
+

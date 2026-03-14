@@ -1,4 +1,5 @@
-from pydantic import BaseModel, Field
+import re
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List
 from datetime import datetime
 from models import TournamentStatus
@@ -7,9 +8,17 @@ from models import TournamentStatus
 # ── Tournament ──
 class TournamentCreate(BaseModel):
     name: str = Field(min_length=1, max_length=255)
-    slug: str = Field(min_length=1, max_length=255, pattern=r"^[a-z0-9\-]+$")
+    slug: str = Field(min_length=1, max_length=255)
     max_players: int = Field(default=10, ge=2, le=30)
     date_event: Optional[datetime] = None
+
+    @field_validator("slug", mode="before")
+    @classmethod
+    def normalize_and_validate_slug(cls, value: str) -> str:
+        slug = (value or "").strip().lower()
+        if not re.fullmatch(r"[a-z0-9-]+", slug):
+            raise ValueError("Le slug doit contenir seulement des lettres minuscules, des chiffres et des tirets")
+        return slug
 
 class TournamentUpdate(BaseModel):
     name: Optional[str] = None
@@ -17,6 +26,8 @@ class TournamentUpdate(BaseModel):
     max_players: Optional[int] = None
     inscriptions_open: Optional[bool] = None
     date_event: Optional[datetime] = None
+    surface_one_name: Optional[str] = Field(default=None, min_length=1, max_length=80)
+    surface_two_name: Optional[str] = Field(default=None, min_length=1, max_length=80)
 
 class TournamentOut(BaseModel):
     id: int
@@ -26,6 +37,8 @@ class TournamentOut(BaseModel):
     max_players: int
     inscriptions_open: bool
     date_event: Optional[datetime]
+    surface_one_name: str
+    surface_two_name: str
     created_at: datetime
     class Config:
         from_attributes = True
@@ -145,4 +158,6 @@ class PublicTournamentOut(BaseModel):
     inscriptions_open: bool
     max_players: int
     date_event: Optional[datetime]
+    surface_one_name: str
+    surface_two_name: str
     divisions: List[PublicDivisionOut] = []

@@ -203,6 +203,45 @@ function authFetch(url, opts = {}) {
   });
 }
 
+async function parseApiError(response, fallback = 'Erreur') {
+  try {
+    const data = await response.json();
+    if (typeof data?.detail === 'string') return data.detail;
+    if (Array.isArray(data?.detail) && data.detail.length) {
+      const first = data.detail[0];
+      if (typeof first?.msg === 'string') return first.msg;
+    }
+  } catch (_) {}
+  return fallback;
+}
+
+function normalizeSlug(value) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-');
+}
+
+function isValidSlug(value) {
+  return /^[a-z0-9-]+$/.test(value);
+}
+
+function getTournamentSurfaces() {
+  if (!currentTournament) return ['Surface 1 - Shawinigan', 'Surface 2 - Shawinigan'];
+  return [
+    currentTournament.surface_one_name || 'Surface 1 - Shawinigan',
+    currentTournament.surface_two_name || 'Surface 2 - Shawinigan'
+  ];
+}
+
+function renderTerrainSelect(mid, value) {
+  const current = value || '';
+  const options = ['', ...getTournamentSurfaces()];
+  return `<select onchange="updateMatchMeta(${mid},'terrain',this.value)">${options.map(opt => `<option value="${esc(opt)}" ${opt===current?'selected':''}>${opt||'Surface'}</option>`).join('')}</select>`;
+}
+
 // ═══ NAV ═══
 document.querySelectorAll('.nav-t').forEach(t => {
   t.addEventListener('click', () => {
@@ -257,19 +296,35 @@ async function selectTournament(id) {
 
 function showCreateTournament() { document.getElementById('createTournamentForm').style.display='block'; }
 
+document.getElementById('ntSlug').addEventListener('blur', (event) => {
+  event.target.value = normalizeSlug(event.target.value);
+});
+
 async function createTournament() {
   const name = document.getElementById('ntName').value.trim();
-  const slug = document.getElementById('ntSlug').value.trim();
+  const rawSlug = document.getElementById('ntSlug').value;
+  const slug = normalizeSlug(rawSlug);
+  document.getElementById('ntSlug').value = slug;
   const max = parseInt(document.getElementById('ntMax').value) || 10;
   const dateVal = document.getElementById('ntDate').value;
-  if (!name||!slug) { toast('Nom et slug requis'); return; }
+
+  if (!name || !slug) { toast('Nom et slug requis'); return; }
+  if (!isValidSlug(slug)) {
+    toast('Slug invalide: utilisez seulement lettres minuscules, chiffres et tirets');
+    return;
+  }
+
   const body = { name, slug, max_players: max };
   if (dateVal) body.date_event = new Date(dateVal).toISOString();
+
   const r = await authFetch('/admin/tournaments', { method:'POST', body: JSON.stringify(body) });
-  if (!r.ok) { const e=await r.json(); toast(e.detail||'Erreur'); return; }
+  if (!r.ok) {
+    toast(await parseApiError(r, 'Erreur lors de la création du tournoi'));
+    return;
+  }
+
   document.getElementById('createTournamentForm').style.display='none';
   await loadTournaments();
-  const created = await r.json();
   toast('Tournoi créé!');
 }
 
@@ -316,6 +371,10 @@ async function renderConfig() {
         <div><label>Max joueurs</label><input type="number" value="${t.max_players}" style="width:80px" onchange="updateTournament({max_players:parseInt(this.value)})"></div>
         <div><label>Statut</label><select onchange="updateTournament({status:this.value})" style="width:120px"><option value="draft" ${t.status==='draft'?'selected':''}>Brouillon</option><option value="active" ${t.status==='active'?'selected':''}>Actif</option><option value="archived" ${t.status==='archived'?'selected':''}>Archivé</option></select></div>
         <div><label style="display:flex;align-items:center;gap:.4rem;cursor:pointer"><input type="checkbox" ${t.inscriptions_open?'checked':''} onchange="updateTournament({inscriptions_open:this.checked})" style="width:auto;accent-color:var(--accent)">Inscriptions ouvertes</label></div>
+      </div>
+      <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:.8rem">
+        <div style="flex:1;min-width:220px"><label>Surface 1</label><input type="text" value="${esc(t.surface_one_name||'Surface 1 - Shawinigan')}" onchange="updateTournament({surface_one_name:this.value.trim()||'Surface 1 - Shawinigan'})"></div>
+        <div style="flex:1;min-width:220px"><label>Surface 2</label><input type="text" value="${esc(t.surface_two_name||'Surface 2 - Shawinigan')}" onchange="updateTournament({surface_two_name:this.value.trim()||'Surface 2 - Shawinigan'})"></div>
       </div>
     </div>
     ${divsHtml}
@@ -434,7 +493,7 @@ function exportCodesCSV() {
 async function generateAllBrackets() {
   if (!currentTournament) return;
   for (const d of currentTournament.divisions||[]) {
-    if (d.teams.filter(t=>t.name.trim()).length < 2) { toast(`${d.name}: au moins 2 équipes requises`); return; }
+    if (d.teams.filter(t=>t.name.trim()).length < 2) { toast(`${d.name}: au moins 2 quipes requises`); return; }
   }
   for (const d of currentTournament.divisions||[]) {
     const r = await authFetch(`/admin/divisions/${d.id}/generate-bracket`, {method:'POST'});
@@ -525,7 +584,7 @@ async function renderHoraire() {
       <span style="text-align:right;font-weight:500">${m.team1_name||'TBD'}</span>
       <span style="text-align:center;color:var(--dim);font-weight:700">VS</span>
       <span style="font-weight:500">${m.team2_name||'TBD'}</span>
-      <input type="text" value="${m.terrain||''}" placeholder="Terrain" onchange="updateMatchMeta(${m.id},'terrain',this.value)" style="text-align:center">
+      ${renderTerrainSelect(m.id, m.terrain)}
     </div>`;
   }
   html += '</div>';

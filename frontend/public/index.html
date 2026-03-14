@@ -79,9 +79,11 @@ main{max-width:1000px;margin:0 auto;padding:1.5rem 1rem}
 .empty{text-align:center;padding:3rem 1rem;color:var(--dim)}
 .empty .ic{font-size:3rem;margin-bottom:1rem;opacity:.3}
 
-/* TOURNAMENT SELECTOR */
 .t-sel{display:flex;justify-content:center;margin-bottom:1rem}
 .t-sel select{padding:.5rem 1rem;border:1px solid var(--border);border-radius:var(--r);background:var(--card);font-size:.9rem;color:var(--text);font-family:inherit}
+.t-info{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:1rem 1.2rem;margin-bottom:1rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.75rem;box-shadow:var(--shadow)}
+.t-info .k{font-size:.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700}
+.t-info .v{font-size:.92rem;font-weight:600}
 
 @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 
@@ -98,7 +100,7 @@ main{max-width:1000px;margin:0 auto;padding:1.5rem 1rem}
 <body>
 
 <div class="hdr">
-  <h1><span class="g" id="tName">Tournoi</span></h1>
+  <h1><span class="g">Cocktail Media</span> <span id="tName">Tournoi</span></h1>
   <p class="sub" id="tSub"><span class="live-dot" id="liveDot" style="display:none"></span><span id="liveText">Chargement...</span></p>
 </div>
 
@@ -111,6 +113,8 @@ main{max-width:1000px;margin:0 auto;padding:1.5rem 1rem}
   <div class="t-sel" id="tSel" style="display:none">
     <select id="tSelect" onchange="loadTournament(this.value)"></select>
   </div>
+
+  <div id="tInfo"></div>
 
   <section id="horaire" class="sec a">
     <div class="pills" id="sPills"></div>
@@ -170,6 +174,7 @@ async function loadTournament(slug) {
     document.getElementById('liveDot').style.display = 'inline-block';
 
     if (!bDiv && T.divisions.length) bDiv = T.divisions[0].id;
+    renderTournamentInfo();
     renderSchedule();
     renderBrackets();
     connectWS(slug);
@@ -177,6 +182,7 @@ async function loadTournament(slug) {
 }
 
 function showEmpty() {
+  document.getElementById('tInfo').innerHTML = '';
   document.getElementById('sCont').innerHTML = '<div class="empty"><div class="ic">🏒</div><p>Aucun tournoi disponible pour le moment.</p></div>';
 }
 
@@ -209,6 +215,20 @@ function connectWS(slug) {
     } catch(err) {}
   };
   ws.onclose = () => { setTimeout(() => connectWS(slug), 5000); };
+}
+
+function renderTournamentInfo() {
+  if (!T) return;
+  const eventDate = T.date_event ? new Date(T.date_event).toLocaleDateString('fr-CA') : 'À confirmer';
+  const surfaces = [T.surface_one_name || 'Surface 1 - Shawinigan', T.surface_two_name || 'Surface 2 - Shawinigan'].join(' • ');
+  document.getElementById('tInfo').innerHTML = `
+    <div class="t-info">
+      <div><div class="k">Ville</div><div class="v">Shawinigan</div></div>
+      <div><div class="k">Date</div><div class="v">${eventDate}</div></div>
+      <div><div class="k">Surfaces</div><div class="v">${esc(surfaces)}</div></div>
+      <div><div class="k">Catégories</div><div class="v">${T.divisions.length}</div></div>
+    </div>
+  `;
 }
 
 // ── SCHEDULE ──
@@ -247,7 +267,7 @@ function renderSchedule() {
     const upd = updatedMatches.has(m.id) ? ' updated' : '';
 
     html += `<div class="mc${upd}">
-      <div class="time">${m.match_time||'—'}<span class="ter">${m.terrain?'Terrain '+m.terrain:''}</span></div>
+      <div class="time">${m.match_time||'—'}<span class="ter">${m.terrain||''}</span></div>
       <div class="tm r ${t1w?'w':''} ${!m.team1_name?'tbd':''}">${m.team1_name||'TBD'}</div>
       <div class="sc">${hs?`<span class="s ${t1w?'w':''}">${m.score1}</span><span style="color:var(--dim)">-</span><span class="s ${t2w?'w':''}">${m.score2}</span>`:'<span class="vs">VS</span>'}</div>
       <div class="tm ${t2w?'w':''} ${!m.team2_name?'tbd':''}">${m.team2_name||'TBD'}</div>
